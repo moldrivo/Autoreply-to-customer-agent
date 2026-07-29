@@ -7,8 +7,8 @@ import { motion } from 'framer-motion'
 interface TabsProps {
   defaultValue: string
   value?: string
-  onValueChange?: (value: string) => void
-  children: React.ReactNode | ((props: { activeValue: string; onValueChange: (val: string) => void }) => React.ReactNode)
+  onValueChange?: (_value: string) => void
+  children: React.ReactNode | ((_props: { activeValue: string; onValueChange: (_val: string) => void }) => React.ReactNode)
   className?: string
 }
 
@@ -37,11 +37,11 @@ interface TabsListProps {
   children: React.ReactNode
   className?: string
   activeValue?: string
-  onValueChange?: (value: string) => void
+  onValueChange?: (_value: string) => void
 }
 
 const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
-  ({ className, children, activeValue, onValueChange, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -63,7 +63,7 @@ interface TabsTriggerProps {
   children: React.ReactNode
   className?: string
   activeValue?: string
-  onValueChange?: (value: string) => void
+  onValueChange?: (_value: string) => void
 }
 
 const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(

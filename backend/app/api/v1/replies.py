@@ -11,6 +11,7 @@ from app.core.dependencies import get_current_business, get_current_user, get_db
 from app.models.business import Business
 from app.models.user import User
 from app.schemas.common import SuccessResponse
+from app.schemas.reply import ReplyRejectRequest, ReplyUpdateRequest
 from app.services.reply_service import ReplyService
 
 logger = logging.getLogger(__name__)
@@ -61,14 +62,11 @@ async def get_reply(
 @router.patch("/{reply_id}")
 async def update_reply(
     reply_id: UUID,
-    body: dict,
+    body: ReplyUpdateRequest,
     current_user: User = Depends(get_current_user),
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    content = body.get("content")
-    if not content:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="content is required")
     try:
         service = ReplyService(db)
         reply = await service.update_reply(business_id=business.id, reply_id=reply_id, content=content)
@@ -105,14 +103,11 @@ async def approve_reply(
 @router.post("/{reply_id}/reject")
 async def reject_reply(
     reply_id: UUID,
-    body: dict,
+    body: ReplyRejectRequest,
     current_user: User = Depends(get_current_user),
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    reason = body.get("reason", "")
-    if not reason:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="reason is required")
     try:
         service = ReplyService(db)
         reply = await service.reject_reply(business_id=business.id, reply_id=reply_id, reason=reason)

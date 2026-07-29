@@ -13,7 +13,7 @@ interface SelectOption {
 interface SelectProps {
   options: SelectOption[]
   value?: string
-  onChange?: (value: string) => void
+  onChange?: (_value: string) => void
   placeholder?: string
   className?: string
   searchable?: boolean
@@ -22,7 +22,7 @@ interface SelectProps {
 }
 
 const Select = forwardRef<HTMLDivElement, SelectProps>(
-  ({ options, value, onChange, placeholder = 'Select...', className, searchable, label, error }, ref) => {
+  ({ options, value, onChange, placeholder = 'Select...', className, searchable, label, error }, _ref) => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
     const containerRef = useRef<HTMLDivElement>(null)

@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.dependencies import get_current_business, get_current_user, get_db
 from app.models.business import Business
 from app.models.user import User
 from app.schemas.common import SuccessResponse
-from app.schemas.review import ReviewFilterParams
+from app.schemas.review import (
+    FlagReviewRequest,
+    GenerateReplyRequest,
+    ReviewFilterParams,
+)
 from app.services.reply_service import ReplyService
 from app.services.review_service import ReviewService
 
@@ -93,17 +99,14 @@ async def get_review(
 @router.patch("/{review_id}/flag")
 async def flag_review(
     review_id: UUID,
-    body: dict,
+    body: FlagReviewRequest,
     current_user: User = Depends(get_current_user),
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    reason = body.get("reason", "")
-    if not reason:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="reason is required")
     try:
         service = ReviewService(db)
-        review = await service.flag_review(business_id=business.id, review_id=review_id, reason=reason)
+        review = await service.flag_review(business_id=business.id, review_id=review_id, reason=body.reason)
         if not review:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
         return SuccessResponse(message="Review flagged successfully", data={"review_id": str(review.id)})
@@ -117,16 +120,15 @@ async def flag_review(
 @router.post("/{review_id}/generate-reply")
 async def generate_reply(
     review_id: UUID,
-    body: dict = {},
+    body: GenerateReplyRequest = {},
     current_user: User = Depends(get_current_user),
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    custom_instructions = body.get("custom_instructions")
     try:
         service = ReplyService(db)
         reply = await service.generate_reply(
-            business_id=business.id, review_id=review_id, custom_instructions=custom_instructions
+            business_id=business.id, review_id=review_id, custom_instructions=body.custom_instructions
         )
         return SuccessResponse(message="Reply generated successfully", data={"reply_id": str(reply.id), "content": reply.content})
     except ValueError as exc:
@@ -151,9 +153,10 @@ async def ingest_webhook(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid business_id")
 
-    from app.core.config import settings
-    webhook_secret = settings.WEBHOOK_SECRET if hasattr(settings, "WEBHOOK_SECRET") else None
-    if webhook_secret and x_webhook_secret != webhook_secret:
+    webhook_secret = settings.WEBHOOK_SECRET
+    if webhook_secret and (
+        x_webhook_secret is None or not secrets.compare_digest(x_webhook_secret, webhook_secret)
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid webhook secret")
 
     try:

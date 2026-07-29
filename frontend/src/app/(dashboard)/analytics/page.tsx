@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,9 +22,6 @@ import { RatingRing } from '@/components/analytics/rating-ring'
 import { cn } from '@/lib/utils'
 import { useDashboardStats, useSentimentTrends, usePlatformPerformance, useMonthlyActivity } from '@/hooks/use-analytics'
 import {
-  TrendingUp,
-  TrendingDown,
-  Bot,
   Edit3,
   Clock,
   CheckCircle,
@@ -78,8 +74,6 @@ const topTemplates = [
   { name: 'Resolution - Complaint', usage: 98, success_rate: 91 },
   { name: 'Welcome - New Customer', usage: 76, success_rate: 96 },
 ]
-
-const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#991B1B']
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState<DateRange>('30')

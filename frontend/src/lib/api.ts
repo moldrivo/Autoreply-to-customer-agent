@@ -1,9 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { getToken, getRefreshToken, setToken, setRefreshToken, removeToken, removeRefreshToken } from './auth'
 import type {
-  User, Business, BrandVoice, Review, Reply, DashboardStats,
+  User, BrandVoice, Review, Reply, DashboardStats,
   SentimentTrend, PlatformPerformance, MonthlyActivity, PlatformConnection,
-  ApiResponse, PaginatedResponse
+  PaginatedResponse
 } from '@/types'
 
 const api = axios.create({
@@ -88,8 +88,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return data
 }
 
-export async function getSentimentTrends(): Promise<SentimentTrend[]> {
-  const { data } = await api.get('/analytics/sentiment-trends')
+export async function getSentimentTrends(days?: number): Promise<SentimentTrend[]> {
+  const { data } = await api.get('/analytics/sentiment-trends', { params: days ? { days } : undefined })
   return data
 }
 
@@ -98,8 +98,8 @@ export async function getPlatformPerformance(): Promise<PlatformPerformance[]> {
   return data
 }
 
-export async function getMonthlyActivity(): Promise<MonthlyActivity[]> {
-  const { data } = await api.get('/analytics/monthly-activity')
+export async function getMonthlyActivity(months?: number): Promise<MonthlyActivity[]> {
+  const { data } = await api.get('/analytics/monthly-activity', { params: months ? { months } : undefined })
   return data
 }
 

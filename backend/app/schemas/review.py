@@ -51,3 +51,11 @@ class ReviewFilterParams(BaseModel):
     search: Optional[str] = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
+
+
+class FlagReviewRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=500)
+
+
+class GenerateReplyRequest(BaseModel):
+    custom_instructions: Optional[str] = Field(None, max_length=2000)

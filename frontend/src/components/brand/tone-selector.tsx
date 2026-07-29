@@ -30,7 +30,7 @@ export interface ToneOption {
 
 interface ToneSelectorProps {
   value: string
-  onChange: (value: string) => void
+  onChange: (_value: string) => void
   options: ToneOption[]
   usageCounts?: Record<string, number>
 }

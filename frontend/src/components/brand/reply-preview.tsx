@@ -76,7 +76,7 @@ export function ReplyPreview({ brandSettings, reviewText }: ReplyPreviewProps) {
     const personalizedGreeting = greeting.replace('[Customer Name]', customerName)
 
     return `${personalizedGreeting}\n\n${body}\n\n${closing},\n${company}`
-  }, [brandSettings])
+  }, [brandSettings, reviewText])
 
   return (
     <Card glass>

@@ -48,7 +48,7 @@ export function useApproveReply() {
   const queryClient = useQueryClient()
   return useMutation<Reply, Error, string>({
     mutationFn: (replyId: string) => api.approveReply(replyId),
-    onSuccess: (_data, replyId) => {
+    onSuccess: (_data, _replyId) => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] })
     },
   })
@@ -58,7 +58,7 @@ export function useRejectReply() {
   const queryClient = useQueryClient()
   return useMutation<Reply, Error, string>({
     mutationFn: (replyId: string) => api.rejectReply(replyId),
-    onSuccess: (_data, replyId) => {
+    onSuccess: (_data, _replyId) => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] })
     },
   })
@@ -68,7 +68,7 @@ export function usePublishReply() {
   const queryClient = useQueryClient()
   return useMutation<Reply, Error, string>({
     mutationFn: (replyId: string) => api.publishReply(replyId),
-    onSuccess: (_data, replyId) => {
+    onSuccess: (_data, _replyId) => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] })
     },
   })
@@ -78,7 +78,7 @@ export function useRegenerateReply() {
   const queryClient = useQueryClient()
   return useMutation<Reply, Error, string>({
     mutationFn: (replyId: string) => api.regenerateReply(replyId),
-    onSuccess: (_data, replyId) => {
+    onSuccess: (_data, _replyId) => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] })
     },
   })

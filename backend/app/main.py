@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
@@ -12,19 +13,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from slowapi.errors import RateLimitExceeded
-
-try:
-    from slowapi.extension import _rate_limit_exceeded_handler
-except ImportError:
-    from slowapi import _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.api.v1 import admin, analytics, auth, brand, platforms, replies, reviews
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.dependencies import limiter
+from app.core.logging_config import setup_logging
 from app.core.redis import get_redis
 
+setup_logging(debug=settings.DEBUG)
 logger = logging.getLogger(__name__)
 
 if settings.SENTRY_DSN:
@@ -36,6 +36,34 @@ if settings.SENTRY_DSN:
 
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"])
 REQUEST_DURATION = Histogram("http_request_duration_seconds", "HTTP request duration", ["method", "endpoint"])
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
+        request_id = str(uuid.uuid4())[:8]
+        request.state.request_id = request_id
+        request.state.start_time = time.time()
+        _log = logging.LoggerAdapter(logger, {"request_id": request_id})
+        _log.info("--> %s %s", request.method, request.url.path)
+        response = await call_next(request)
+        duration = time.time() - request.state.start_time
+        log_adapter = logging.LoggerAdapter(logger, {"request_id": request_id})
+        log_adapter.info("<-- %s %s %s (%.3fs)", request.method, request.url.path, response.status_code, duration)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        return response
 
 
 @asynccontextmanager
@@ -84,6 +112,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next: Any) -> Response:
@@ -100,6 +131,17 @@ async def metrics_middleware(request: Request, call_next: Any) -> Response:
         REQUEST_COUNT.labels(method=method, endpoint=path, status=500).inc()
         REQUEST_DURATION.labels(method=method, endpoint=path).observe(time.time() - start)
         raise
+
+
+@app.middleware("http")
+async def request_body_limit_middleware(request: Request, call_next: Any) -> Response:
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > settings.MAX_REQUEST_BODY_SIZE:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": "Request body too large"},
+        )
+    return await call_next(request)
 
 
 app.include_router(auth.router)
@@ -135,7 +177,8 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled exception: %s", exc)
+    request_id = getattr(request.state, "request_id", "unknown")
+    logger.exception("Unhandled exception [%s]: %s", request_id, exc)
     if settings.SENTRY_DSN:
         sentry_sdk.capture_exception(exc)
     return JSONResponse(

@@ -4,7 +4,6 @@ import { forwardRef } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 const Dialog = DialogPrimitive.Root
 const DialogTrigger = DialogPrimitive.Trigger

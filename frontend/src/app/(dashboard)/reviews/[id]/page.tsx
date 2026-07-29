@@ -31,7 +31,6 @@ import {
   RefreshCw,
   Send,
   Flag,
-  FileText,
   Trash2,
   Edit3,
 } from 'lucide-react'
@@ -49,12 +48,12 @@ export default function ReviewDetailPage() {
   const [showPublishDialog, setShowPublishDialog] = useState(false)
   const [showFlagDialog, setShowFlagDialog] = useState(false)
   const [flagReason, setFlagReason] = useState('')
-  const [generating, setGenerating] = useState(false)
-
   const { data: review, isLoading } = useQuery({
     queryKey: ['review', reviewId],
     queryFn: () => api.getReview(reviewId),
   })
+
+  const replyId = review?.reply?.id
 
   const generateMutation = useMutation({
     mutationFn: () => api.generateReply(reviewId),
@@ -67,7 +66,10 @@ export default function ReviewDetailPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (content: string) => api.updateReply(reviewId, content),
+    mutationFn: (content: string) => {
+      if (!replyId) throw new Error('No reply to update')
+      return api.updateReply(replyId, content)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review', reviewId] })
       setIsEditing(false)
@@ -77,7 +79,10 @@ export default function ReviewDetailPage() {
   })
 
   const approveMutation = useMutation({
-    mutationFn: () => api.approveReply(reviewId),
+    mutationFn: () => {
+      if (!replyId) throw new Error('No reply to approve')
+      return api.approveReply(replyId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review', reviewId] })
       setShowApproveDialog(false)
@@ -87,7 +92,10 @@ export default function ReviewDetailPage() {
   })
 
   const rejectMutation = useMutation({
-    mutationFn: () => api.rejectReply(reviewId),
+    mutationFn: () => {
+      if (!replyId) throw new Error('No reply to reject')
+      return api.rejectReply(replyId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review', reviewId] })
       setShowRejectDialog(false)
@@ -97,7 +105,10 @@ export default function ReviewDetailPage() {
   })
 
   const publishMutation = useMutation({
-    mutationFn: () => api.publishReply(reviewId),
+    mutationFn: () => {
+      if (!replyId) throw new Error('No reply to publish')
+      return api.publishReply(replyId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review', reviewId] })
       setShowPublishDialog(false)

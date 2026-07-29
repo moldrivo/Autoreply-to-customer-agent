@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Skeleton, TableSkeleton } from '@/components/ui/skeleton'
+
 import {
   Dialog,
   DialogContent,
@@ -16,8 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { cn, formatDate } from '@/lib/utils'
-import api from '@/lib/api'
+import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   Building2,
@@ -31,17 +29,14 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  RefreshCw,
   Shield,
-  Eye,
-  EyeOff,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Server,
   Database,
   Brain,
+  EyeOff,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
@@ -131,7 +126,6 @@ const mockAuditLogs: AuditLog[] = Array.from({ length: 20 }).map((_, i) => ({
 }))
 
 export default function AdminPage() {
-  const queryClient = useQueryClient()
   const [showNewKeyDialog, setShowNewKeyDialog] = useState(false)
   const [showRevokeDialog, setShowRevokeDialog] = useState<string | null>(null)
   const [newKeyName, setNewKeyName] = useState('')
@@ -144,7 +138,7 @@ export default function AdminPage() {
       toast.error('Please enter a key name')
       return
     }
-    const fakeKey = `ar_${Math.random().toString(36).slice(2, 10)}_${Math.random().toString(36).slice(2, 14)}`
+    const fakeKey = `ar_${crypto.randomUUID().replace(/-/g, '').substring(0, 8)}_${crypto.randomUUID().replace(/-/g, '').substring(0, 12)}`
     setGeneratedKey(fakeKey)
     toast.success('API key generated')
   }
@@ -154,7 +148,7 @@ export default function AdminPage() {
     toast.success('Copied to clipboard')
   }
 
-  const handleRevokeKey = (id: string) => {
+  const handleRevokeKey = (_id: string) => {
     setShowRevokeDialog(null)
     toast.success('API key revoked')
   }

@@ -13,7 +13,6 @@ import {
   Flag,
   Eye,
   ChevronDown,
-  ChevronUp,
   MessageSquare,
   CheckCircle2,
   Clock,
@@ -22,9 +21,9 @@ import {
 
 interface ReviewCardProps {
   review: Review
-  onGenerate?: (id: string) => void
-  onFlag?: (id: string) => void
-  onView?: (id: string) => void
+  onGenerate?: (_id: string) => void
+  onFlag?: (_id: string) => void
+  onView?: (_id: string) => void
   loading?: boolean
   selected?: boolean
 }

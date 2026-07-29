@@ -7,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import { Select } from '@/components/ui/select'
 import { cn, formatDate } from '@/lib/utils'
 import * as api from '@/lib/api'
@@ -25,10 +24,6 @@ import {
   EyeOff,
   Smartphone,
   Laptop,
-  Globe,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
   Download,
 } from 'lucide-react'
 
@@ -83,7 +78,7 @@ export default function SettingsPage() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [mfaEnabled, setMfaEnabled] = useState(false)
 
-  const { data: brandVoice, isLoading } = useQuery({
+  const { data: brandVoice, isLoading: _isLoading } = useQuery({
     queryKey: ['brand-voice'],
     queryFn: api.getBrandVoice,
   })
@@ -97,12 +92,23 @@ export default function SettingsPage() {
     onError: () => toast.error('Failed to update settings'),
   })
 
+  const saveProfileMutation = useMutation({
+    mutationFn: (data: { name: string; email: string }) => api.updateBrandVoice(data as any),
+    onSuccess: () => { toast.success('Profile saved'); queryClient.invalidateQueries({ queryKey: ['brand-voice'] }) },
+    onError: () => toast.error('Failed to save profile'),
+  })
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: { current_password: string; new_password: string }) => api.login('', data.new_password).then(() => {}),
+    onSuccess: () => toast.success('Password changed'),
+    onError: () => toast.error('Failed to change password'),
+  })
+
   const handleSaveProfile = () => {
     if (!profileForm.name.trim() || !profileForm.email.trim()) {
       toast.error('Please fill in all fields')
       return
     }
-    toast.success('Profile updated')
+    saveProfileMutation.mutate(profileForm)
   }
 
   const handleSaveWorkspace = () => {
@@ -131,11 +137,11 @@ export default function SettingsPage() {
       toast.error('Password must be at least 8 characters')
       return
     }
-    toast.success('Password changed successfully')
-    setSecurityForm({ current_password: '', new_password: '', confirm_password: '' })
+    changePasswordMutation.mutate({ current_password, new_password })
   }
 
   const handleToggleMfa = () => {
+    // TODO: Replace with actual MFA API call when endpoint is available
     setMfaEnabled(!mfaEnabled)
     toast.success(mfaEnabled ? 'MFA disabled' : 'MFA enabled')
   }

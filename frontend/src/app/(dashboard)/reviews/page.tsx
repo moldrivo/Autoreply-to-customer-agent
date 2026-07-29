@@ -1,21 +1,20 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton, CardSkeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
+import { CardSkeleton } from '@/components/ui/skeleton'
 import { cn, formatRelativeTime, truncate, sentimentColor } from '@/lib/utils'
 import * as api from '@/lib/api'
 import { ReviewCard } from '@/components/reviews/review-card'
 import { FiltersBar } from '@/components/reviews/filters-bar'
 import { PageTransition } from '@/components/layout/page-transition'
-import type { Review } from '@/types'
+
 import {
   Star,
   Download,
@@ -52,6 +51,13 @@ export default function ReviewsPage() {
   const router = useRouter()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current) }
+  }, [search])
   const [sentiment, setSentiment] = useState('')
   const [platform, setPlatform] = useState('')
   const [rating, setRating] = useState(0)
@@ -61,15 +67,15 @@ export default function ReviewsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [showNewIndicator, setShowNewIndicator] = useState(false)
+  const showNewIndicator = false
 
   const { data, isLoading } = useQuery({
-    queryKey: ['reviews', page, search, sentiment, platform, rating, riskLevel, sortBy, sortOrder],
+    queryKey: ['reviews', page, debouncedSearch, sentiment, platform, rating, riskLevel, sortBy, sortOrder],
     queryFn: () =>
       api.getReviews({
         page,
         page_size: 12,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         sentiment: sentiment || undefined,
         platform: platform || undefined,
         rating: rating || undefined,

@@ -24,3 +24,4 @@ pinecone-client==5.0.0
 qdrant-client==1.11.0
 slowapi==0.1.9
 pydantic-extra-types==2.9.0
+bcrypt==5.0.0

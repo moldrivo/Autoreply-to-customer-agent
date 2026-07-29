@@ -13,6 +13,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     LoginRequest,
     MFAVerifyRequest,
+    RefreshTokenRequest,
     ResetPasswordRequest,
     SignupRequest,
     TokenResponse,
@@ -143,13 +144,10 @@ async def get_current_user_profile(
 
 
 @router.post("/refresh", response_model=SuccessResponse)
-async def refresh_token(body: dict, db: AsyncSession = Depends(get_db)):
-    refresh_token_str = body.get("refresh_token")
-    if not refresh_token_str:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="refresh_token is required")
+async def refresh_token(body: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
     try:
         service = AuthService(db)
-        result = await service.refresh_token(refresh_token=refresh_token_str)
+        result = await service.refresh_token(refresh_token=body.refresh_token)
         return SuccessResponse(message="Token refreshed", data=result)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))

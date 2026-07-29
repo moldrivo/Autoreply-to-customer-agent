@@ -14,7 +14,7 @@ export function useDashboardStats() {
 export function useSentimentTrends(days: number = 30) {
   return useQuery<SentimentTrend[]>({
     queryKey: ['analytics', 'sentiment-trends', days],
-    queryFn: () => api.getSentimentTrends(),
+    queryFn: () => api.getSentimentTrends(days),
   })
 }
 
@@ -28,6 +28,6 @@ export function usePlatformPerformance() {
 export function useMonthlyActivity(months: number = 12) {
   return useQuery<MonthlyActivity[]>({
     queryKey: ['analytics', 'monthly-activity', months],
-    queryFn: () => api.getMonthlyActivity(),
+    queryFn: () => api.getMonthlyActivity(months),
   })
 }

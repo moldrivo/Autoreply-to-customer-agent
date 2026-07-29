@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
@@ -61,7 +61,7 @@ def require_role(role: str) -> Callable[..., Any]:
 class RateLimiter:
     def __init__(self, limit: str = "100/minute") -> None:
         self.limit = limit
-        self.limiter = limiter
+        self._limiter = limiter
 
-    async def __call__(self) -> None:
-        pass
+    async def __call__(self, request: Request) -> None:
+        await self._limiter.limit(self.limit)(request)

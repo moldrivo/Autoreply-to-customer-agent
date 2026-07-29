@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton, CardSkeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn, formatRelativeTime, sentimentColor } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import * as api from '@/lib/api'
@@ -32,11 +32,29 @@ import {
   Star,
   HelpCircle,
   RefreshCw,
-  InboxIcon,
   Folder,
   FileText,
 } from 'lucide-react'
 import { PageTransition } from '@/components/layout/page-transition'
+
+function SecondsCounter({ lastUpdated: _lastUpdated }: { lastUpdated: Date }) {
+  const [secondsAgo, setSecondsAgo] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsAgo(Math.floor((Date.now() - _lastUpdated.getTime()) / 1000))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [_lastUpdated])
+  return (
+    <Badge variant="outline" className="text-[10px] gap-1">
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      </span>
+      Updated {secondsAgo}s ago
+    </Badge>
+  )
+}
 
 function AnimatedCounter({ value, loading, format = 'number' }: { value?: number; loading?: boolean; format?: 'number' | 'percentage' | 'duration' }) {
   const [display, setDisplay] = useState(0)
@@ -108,7 +126,6 @@ const platforms = [
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [secondsAgo, setSecondsAgo] = useState(0)
   const [showHelp, setShowHelp] = useState(false)
 
   const { data: stats, isLoading: statsLoading, isError } = useQuery({
@@ -116,29 +133,22 @@ export default function DashboardPage() {
     queryFn: api.getDashboardStats,
   })
 
-  const { data: sentimentTrends, isLoading: sentimentLoading } = useQuery({
+  const { data: sentimentTrends, isLoading: _sentimentLoading } = useQuery({
     queryKey: ['sentiment-trends'],
-    queryFn: api.getSentimentTrends,
+    queryFn: () => api.getSentimentTrends(),
   })
 
-  const { data: monthlyActivity, isLoading: activityLoading } = useQuery({
+  const { data: monthlyActivity, isLoading: _activityLoading } = useQuery({
     queryKey: ['monthly-activity'],
-    queryFn: api.getMonthlyActivity,
+    queryFn: () => api.getMonthlyActivity(),
   })
 
-  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+  const { data: reviewsData, isLoading: _reviewsLoading } = useQuery({
     queryKey: ['recent-reviews'],
     queryFn: () => api.getReviews({ page: 1, page_size: 5, sort_by: 'created_at', sort_order: 'desc' }),
   })
 
   const folderData = { file_count: 2, size: '~1.2 KB', files: ['config.json', 'templates.json'] }
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsAgo(Math.floor((Date.now() - lastUpdated.getTime()) / 1000))
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [lastUpdated])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -153,16 +163,18 @@ export default function DashboardPage() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  const sparklineData = Array.from({ length: 7 }, (_, i) => ({
-    value: Math.floor(Math.random() * (stats?.total_reviews || 100)) + 10,
-  }))
+  const sparklineData = useMemo(() =>
+    Array.from({ length: 7 }, (_, _i) => ({
+      value: Math.floor(Math.random() * (stats?.total_reviews || 100)) + 10,
+    })),
+  [stats?.total_reviews])
 
   if (isError) {
     return (
       <PageTransition>
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
           <Card className="py-16 text-center">
-            <InboxIcon className="mx-auto h-16 w-16 text-muted-foreground/30" />
+            <Inbox className="mx-auto h-16 w-16 text-muted-foreground/30" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">No data available yet</h3>
             <p className="mt-1 text-sm text-muted-foreground">Connect your first platform to start seeing your dashboard.</p>
             <Button className="mt-4" variant="default" size="sm">Connect Platform</Button>
@@ -186,15 +198,9 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className="text-[10px] gap-1">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                </span>
-                Updated {secondsAgo}s ago
-              </Badge>
+              <SecondsCounter lastUpdated={lastUpdated} />
               <button
-                onClick={() => { setLastUpdated(new Date()); setSecondsAgo(0) }}
+                onClick={() => { setLastUpdated(new Date()) }}
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Refresh data"
               >

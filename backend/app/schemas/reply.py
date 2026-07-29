@@ -28,6 +28,14 @@ class ReplyUpdateRequest(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+class ReplyRejectRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=500)
+
+
+class ReplyRegenerateRequest(BaseModel):
+    custom_instructions: Optional[str] = Field(None, max_length=2000)
+
+
 class ReplyPublishRequest(BaseModel):
     reply_id: UUID
     schedule_at: Optional[datetime] = None

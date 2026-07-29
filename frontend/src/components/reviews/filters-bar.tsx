@@ -29,17 +29,17 @@ interface FilterPreset {
 
 interface FiltersBarProps {
   search: string
-  onSearchChange: (v: string) => void
+  onSearchChange: (_v: string) => void
   sentiment: string
-  onSentimentChange: (v: string) => void
+  onSentimentChange: (_v: string) => void
   platform: string
-  onPlatformChange: (v: string) => void
+  onPlatformChange: (_v: string) => void
   rating: number
-  onRatingChange: (v: number) => void
+  onRatingChange: (_v: number) => void
   riskLevel: string
-  onRiskLevelChange: (v: string) => void
+  onRiskLevelChange: (_v: string) => void
   dateRange: string
-  onDateRangeChange: (v: string) => void
+  onDateRangeChange: (_v: string) => void
   onClear: () => void
   hasFilters: boolean
   activeFilterCount?: number
@@ -104,13 +104,6 @@ export function FiltersBar({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [presets, setPresets] = useState<FilterPreset[]>([])
   const [showSavePreset, setShowSavePreset] = useState(false)
-
-  const saveCurrentAsPreset = () => {
-    const name = prompt('Preset name:')
-    if (!name) return
-    setPresets((p) => [...p, { name, sentiment, platform, rating, riskLevel, dateRange }])
-    setShowSavePreset(false)
-  }
 
   const applyPreset = (preset: FilterPreset) => {
     onSentimentChange(preset.sentiment)

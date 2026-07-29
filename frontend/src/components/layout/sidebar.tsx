@@ -7,17 +7,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import { useAuthStore } from '@/stores/auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
 import { getInitials } from '@/lib/utils'
 import {
   LayoutDashboard,
   MessageSquare,
-  Send,
+  // Send,
   Mic,
   BarChart3,
   Shield,
   Settings,
-  ChevronLeft,
   Sun,
   Moon,
   X,
@@ -28,7 +26,7 @@ import { useEffect, useState } from 'react'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/reviews', label: 'Reviews', icon: MessageSquare },
-  { href: '/replies', label: 'Replies', icon: Send },
+  // { href: '/replies', label: 'Replies', icon: Send },
   { href: '/brand', label: 'Brand Voice', icon: Mic },
   { href: '/agent', label: 'Agent', icon: Bot },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },

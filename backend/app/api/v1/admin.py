@@ -16,6 +16,7 @@ from app.models.business import Business
 from app.models.usage import UsageMetric
 from app.models.user import User
 from app.schemas.common import HealthResponse, SuccessResponse
+from app.schemas.admin import FeatureFlagsRequest
 
 logger = logging.getLogger(__name__)
 
@@ -175,14 +176,14 @@ async def admin_health():
 
 @router.post("/feature-flags")
 async def update_feature_flags(
-    body: dict,
+    body: FeatureFlagsRequest,
     current_user: User = Depends(require_role("superuser")),
     db: AsyncSession = Depends(get_db),
 ):
     try:
         from app.core.redis import cache_set
-        await cache_set("feature_flags", body, ttl=86400)
-        return SuccessResponse(message="Feature flags updated", data=body)
+        await cache_set("feature_flags", body.flags, ttl=86400)
+        return SuccessResponse(message="Feature flags updated", data=body.flags)
     except Exception as exc:
         logger.exception("Failed to update feature flags")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update feature flags")

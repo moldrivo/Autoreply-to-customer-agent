@@ -10,6 +10,7 @@ from app.core.dependencies import get_current_business, get_current_user, get_db
 from app.models.business import Business
 from app.models.user import User
 from app.schemas.common import SuccessResponse
+from app.schemas.platform import ConnectPlatformRequest
 from app.services.platform_service import PlatformService
 
 logger = logging.getLogger(__name__)
@@ -44,22 +45,18 @@ async def list_platforms(
 
 @router.post("/connect")
 async def connect_platform(
-    body: dict,
+    body: ConnectPlatformRequest,
     current_user: User = Depends(get_current_user),
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    platform = body.get("platform")
-    credentials = body.get("credentials", {})
-    if not platform:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="platform is required")
     try:
         service = PlatformService(db)
         connection = await service.connect_platform(
-            business_id=business.id, platform=platform, credentials=credentials
+            business_id=business.id, platform=body.platform, credentials=body.credentials
         )
         return SuccessResponse(
-            message=f"Connected to {platform}",
+            message=f"Connected to {body.platform}",
             data={"id": str(connection.id), "platform": connection.platform},
         )
     except ValueError as exc:

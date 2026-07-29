@@ -1,10 +1,8 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
 import {
   Menu,

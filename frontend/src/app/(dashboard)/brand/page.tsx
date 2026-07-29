@@ -7,14 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@radix-ui/react-switch'
 import { cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import type { BrandVoice } from '@/types'
 import { toast } from 'sonner'
 import { PageTransition } from '@/components/layout/page-transition'
+import { Separator } from '@/components/ui/separator'
 import {
   Save,
   RotateCcw,
@@ -99,8 +98,6 @@ const defaultBrandVoice: Partial<BrandVoice> = {
 export default function BrandVoicePage() {
   const queryClient = useQueryClient()
   const [form, setForm] = useState<Partial<BrandVoice>>(defaultBrandVoice)
-  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
-
   const { data: brandVoice, isLoading } = useQuery({
     queryKey: ['brand-voice'],
     queryFn: api.getBrandVoice,
@@ -143,8 +140,6 @@ export default function BrandVoicePage() {
   const exampleReview = "The food was absolutely delicious! The service was a bit slow but the atmosphere made up for it. Will definitely come back again."
 
   const generatePreview = () => {
-    const tone = tones.find((t) => t.value === form.tone)?.label || 'professional'
-    const lengthLabel = replyLengths.find((l) => l.value === form.reply_length)?.label || 'Medium'
     return `${form.greeting_style || 'Dear [Customer Name]'},\n\nThank you so much for your wonderful review! We're thrilled to hear that you enjoyed the food and the atmosphere here. We appreciate your feedback about the service and will make sure to improve. Your satisfaction means the world to us, and we look forward to welcoming you back again soon!\n\n${form.closing_style || 'Best regards'},\n${form.company_name || '[Company Name]'}`
   }
 

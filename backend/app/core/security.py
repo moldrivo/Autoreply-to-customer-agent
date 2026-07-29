@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import bcrypt
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
@@ -7,8 +8,6 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-import hashlib
-import secrets
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,12 +42,21 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def verify_token(token: str) -> dict[str, Any]:
+def verify_token(token: str, expected_type: Optional[str] = None) -> dict[str, Any]:
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
+        token_type = payload.get("type")
+        if expected_type and token_type != expected_type:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type for this operation",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return payload
+    except HTTPException:
+        raise
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,15 +66,14 @@ def verify_token(token: str) -> dict[str, Any]:
 
 
 def hash_password(password: str) -> str:
-    salt = secrets.token_hex(16)
-    pwd_hash = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f"{salt}${pwd_hash}"
+    password_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
-        salt, pwd_hash = hashed.split("$", 1)
-        return hashlib.sha256((salt + plain).encode()).hexdigest() == pwd_hash
+        return bcrypt.checkpw(plain.encode("utf-8")[:72], hashed.encode("utf-8"))
     except (ValueError, AttributeError):
         return False
 
@@ -75,14 +82,21 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    payload = verify_token(token)
+    payload = verify_token(token, expected_type="access")
     user_id: str | None = payload.get("sub")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
         )
-    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    try:
+        uid = UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+    result = await db.execute(select(User).where(User.id == uid))
     user = result.scalar_one_or_none()
     if user is None:
         raise HTTPException(

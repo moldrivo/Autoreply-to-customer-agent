@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from functools import wraps
@@ -75,11 +76,22 @@ async def cache_delete(key: str) -> None:
         logger.warning("Cache delete failed for key=%s: %s", key, exc)
 
 
+def _make_cache_key(prefix: str, args: tuple, kwargs: dict) -> str:
+    parts = [prefix]
+    if args:
+        parts.append(repr(args))
+    if kwargs:
+        kw_sorted = sorted(kwargs.items())
+        parts.append(repr(kw_sorted))
+    raw = ":".join(parts)
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
 def cached(key_prefix: str, ttl: int = 300):
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            cache_key = f"{key_prefix}:{hash(frozenset(kwargs.items()))}"
+            cache_key = _make_cache_key(key_prefix, args, kwargs)
             cached_val = await cache_get(cache_key)
             if cached_val is not None:
                 return cached_val

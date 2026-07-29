@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,11 +35,11 @@ import {
   Edit3,
 } from 'lucide-react'
 
-export default function ReviewDetailPage() {
-  const params = useParams()
+function ReviewDetailInner() {
+  const searchParams = useSearchParams()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const reviewId = params.id as string
+  const reviewId = searchParams.get('id') || ''
 
   const [editedContent, setEditedContent] = useState('')
   const [isEditing, setIsEditing] = useState(false)
@@ -48,9 +48,11 @@ export default function ReviewDetailPage() {
   const [showPublishDialog, setShowPublishDialog] = useState(false)
   const [showFlagDialog, setShowFlagDialog] = useState(false)
   const [flagReason, setFlagReason] = useState('')
+
   const { data: review, isLoading } = useQuery({
     queryKey: ['review', reviewId],
     queryFn: () => api.getReview(reviewId),
+    enabled: !!reviewId,
   })
 
   const replyId = review?.reply?.id
@@ -127,6 +129,15 @@ export default function ReviewDetailPage() {
     },
     onError: () => toast.error('Failed to flag review'),
   })
+
+  if (!reviewId) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-muted-foreground">No review selected</p>
+        <Button variant="link" onClick={() => router.push('/reviews')}>Back to reviews</Button>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (
@@ -416,5 +427,19 @@ export default function ReviewDetailPage() {
         </DialogContent>
       </Dialog>
     </motion.div>
+  )
+}
+
+export default function ReviewDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+    }>
+      <ReviewDetailInner />
+    </Suspense>
   )
 }

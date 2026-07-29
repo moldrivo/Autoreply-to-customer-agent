@@ -40,4 +40,6 @@ docker/ssl/
 *.swp
 *.swo
 
-# Project specific
+# Next.js static export
+# Next.js static export
+out/

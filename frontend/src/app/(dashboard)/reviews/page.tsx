@@ -143,7 +143,7 @@ export default function ReviewsPage() {
       setFocusedIndex((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter' && focusedIndex >= 0) {
       e.preventDefault()
-      router.push(`/reviews/${items[focusedIndex].id}`)
+      router.push(`/reviews/detail?id=${items[focusedIndex].id}`)
     }
   }, [data, focusedIndex, router])
 
@@ -305,7 +305,7 @@ export default function ReviewsPage() {
                         />
                       </label>
                       <Link
-                        href={`/reviews/${review.id}`}
+                        href={`/reviews/detail?id=${review.id}`}
                         className={cn(
                           focusedIndex === idx && 'ring-2 ring-sky-400 rounded-2xl'
                         )}
@@ -352,7 +352,7 @@ export default function ReviewsPage() {
                         className="rounded border-neutral-300 text-sky-600 focus:ring-sky-500 shrink-0"
                         aria-label={`Select ${review.customer_name}`}
                       />
-                      <Link href={`/reviews/${review.id}`} className="min-w-0">
+                      <Link href={`/reviews/detail?id=${review.id}`} className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{review.customer_name}</p>
                         <p className="text-xs text-muted-foreground truncate">{truncate(review.review_text, 60)}</p>
                       </Link>

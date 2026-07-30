@@ -31,6 +31,7 @@ class Review(Base):
     title: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     language: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    intent: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     sentiment: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     risk_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)

@@ -49,6 +49,7 @@ export interface Review {
   reply_text: string | null
   sentiment: string
   sentiment_confidence: number
+  intent: string | null
   risk_level: string
   needs_human_review: boolean
   is_auto_replied: boolean
@@ -138,7 +139,7 @@ export interface PlatformConnection {
   avg_rating?: number
 }
 
-export type Platform = 'google' | 'facebook' | 'trustpilot' | 'yelp' | 'shopify' | 'amazon' | 'app_store' | 'play_store' | 'airbnb' | 'booking'
+export type Platform = 'google' | 'facebook' | 'trustpilot' | 'yelp' | 'shopify' | 'amazon' | 'app_store' | 'play_store' | 'airbnb' | 'booking' | 'email'
 
 export type Sentiment = 'positive' | 'neutral' | 'negative' | 'very_negative' | 'urgent' | 'spam' | 'toxic' | 'fake'
 

@@ -1,5 +1,6 @@
 from typing import Any
 from app.adapters.base import BasePlatformAdapter
+from app.adapters.email_adapter import EmailAdapter
 from app.adapters.google_adapter import GoogleAdapter
 from app.adapters.facebook_adapter import FacebookAdapter
 from app.adapters.trustpilot_adapter import TrustpilotAdapter
@@ -12,6 +13,7 @@ from app.adapters.airbnb_adapter import AirbnbAdapter
 from app.adapters.booking_adapter import BookingAdapter
 
 _adapter_registry: dict[str, type[BasePlatformAdapter]] = {
+    "email": EmailAdapter,
     "google": GoogleAdapter,
     "facebook": FacebookAdapter,
     "trustpilot": TrustpilotAdapter,

@@ -19,6 +19,7 @@ class ReviewResponse(BaseModel):
     reply_text: Optional[str] = None
     sentiment: Optional[str] = None
     sentiment_confidence: Optional[float] = None
+    intent: Optional[str] = None
     risk_level: Optional[str] = None
     needs_human_review: bool = False
     is_auto_replied: bool = False

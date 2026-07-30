@@ -18,6 +18,7 @@ from app.models.brand_voice import BrandVoice
 from app.models.usage import UsageMetric
 from app.agents.input_validation_agent import InputValidationAgent
 from app.agents.language_detection_agent import LanguageDetectionAgent
+from app.agents.intent_detection_agent import IntentDetectionAgent
 from app.agents.sentiment_agent import SentimentAnalysisAgent
 from app.agents.risk_classification_agent import RiskClassificationAgent
 from app.agents.knowledge_retrieval_agent import KnowledgeRetrievalAgent
@@ -50,6 +51,7 @@ class AIOrchestrator:
 
         self.input_validator = InputValidationAgent()
         self.language_detector = LanguageDetectionAgent()
+        self.intent_detector = IntentDetectionAgent(self.openai_client)
         self.sentiment_analyzer = SentimentAnalysisAgent(self.openai_client)
         self.risk_classifier = RiskClassificationAgent()
         self.knowledge_service = KnowledgeService(db)
@@ -167,7 +169,23 @@ class AIOrchestrator:
             review.language = ld_result.language_code
         pipeline_log.append(step)
 
-        # Step 3: Sentiment Analysis
+        # Step 3: Intent Detection
+        step = await self._run_agent_step("intent_detection", self.intent_detector.detect,
+                                          review_text, review.title, review.platform, review.rating)
+        id_result = step.get("result")
+        intent = "general_inquiry"
+        intent_confidence = 0.0
+        sub_intent = "general"
+        urgency = "medium"
+        if id_result and hasattr(id_result, "intent"):
+            intent = id_result.intent
+            intent_confidence = id_result.confidence
+            sub_intent = id_result.sub_intent
+            urgency = id_result.urgency
+        review.intent = intent
+        pipeline_log.append(step)
+
+        # Step 4: Sentiment Analysis
         step = await self._run_agent_step("sentiment_analysis", self.sentiment_analyzer.analyze, review_text, review.rating)
         sa_result = step.get("result")
         if sa_result and hasattr(sa_result, "sentiment"):
@@ -178,7 +196,7 @@ class AIOrchestrator:
         sentiment_reasoning = sa_result.reasoning if sa_result and hasattr(sa_result, "reasoning") else ""
         pipeline_log.append(step)
 
-        # Step 4: Risk Classification
+        # Step 5: Risk Classification
         step = await self._run_agent_step("risk_classification", self.risk_classifier.classify,
                                           review_text, review.rating, sentiment, review.platform,
                                           business.industry or "General")
@@ -193,7 +211,7 @@ class AIOrchestrator:
         review.risk_level = risk_level
         pipeline_log.append(step)
 
-        # Step 5: Knowledge Retrieval
+        # Step 6: Knowledge Retrieval
         step = await self._run_agent_step("knowledge_retrieval", self.knowledge_retriever.retrieve,
                                           business_id, review_text, review.rating, sentiment)
         kr_result = step.get("result")
@@ -204,7 +222,7 @@ class AIOrchestrator:
             relevant_docs = kr_result.relevant_docs if hasattr(kr_result, "relevant_docs") else []
         pipeline_log.append(step)
 
-        # Step 6: Reply Generation
+        # Step 7: Reply Generation
         gen_result = None
         for attempt in range(2):
             step = await self._run_agent_step("reply_generation", self.reply_generator.generate,
@@ -219,7 +237,7 @@ class AIOrchestrator:
         reply_text = gen_result.reply_text if gen_result and hasattr(gen_result, "reply_text") else "Thank you for your feedback."
         gen_raw = gen_result.raw_response if gen_result and hasattr(gen_result, "raw_response") else {}
 
-        # Step 7: Safety Guardrail
+        # Step 8: Safety Guardrail
         step = await self._run_agent_step("safety_guardrail", self.safety_guardrail.check,
                                           reply_text, review_text, brand_context)
         sg_result = step.get("result")
@@ -228,7 +246,7 @@ class AIOrchestrator:
         violations = sg_result.violations if sg_result and hasattr(sg_result, "violations") else []
         pipeline_log.append(step)
 
-        # Step 8: Quality Evaluation
+        # Step 9: Quality Evaluation
         step = await self._run_agent_step("quality_evaluation", self.quality_evaluator.evaluate,
                                           reply_text, review, brand, brand_context)
         qe_result = step.get("result")
@@ -266,6 +284,10 @@ class AIOrchestrator:
         ai_meta = {
             "pipeline_log": pipeline_log,
             "decisions": decisions,
+            "intent": intent,
+            "intent_confidence": intent_confidence,
+            "sub_intent": sub_intent,
+            "urgency": urgency,
             "sentiment": sentiment,
             "sentiment_confidence": sentiment_confidence,
             "risk_level": risk_level,

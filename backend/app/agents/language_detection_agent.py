@@ -37,7 +37,6 @@ _UNICODE_RANGES: dict[str, tuple[str, str, str]] = {
     "ja": ("Japanese", "ja", r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]"),
     "ko": ("Korean", "ko", r"[\uAC00-\uD7AF\u1100-\u11FF]"),
     "ru": ("Russian", "ru", r"[\u0400-\u04FF]"),
-    "ar": ("Arabic", "ar", r"[\u0600-\u06FF]"),
 }
 
 

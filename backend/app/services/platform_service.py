@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class PlatformService:
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(self, db: AsyncSession, config: Optional[dict[str, Any]] = None) -> None:
         self.db = db
+        self.config = config or {}
 
     async def connect_platform(
         self, business_id: UUID, platform: str, credentials: dict[str, Any]

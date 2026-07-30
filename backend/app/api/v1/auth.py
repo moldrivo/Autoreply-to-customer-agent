@@ -10,6 +10,7 @@ from app.core.dependencies import get_current_user, get_db
 from app.models.user import User
 from app.schemas.auth import (
     AuthUserResponse,
+    ChangePasswordRequest,
     ForgotPasswordRequest,
     LoginRequest,
     MFAVerifyRequest,
@@ -153,4 +154,25 @@ async def refresh_token(body: RefreshTokenRequest, db: AsyncSession = Depends(ge
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
     except Exception as exc:
         logger.exception("Token refresh failed")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+
+
+@router.post("/change-password", response_model=SuccessResponse)
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        service = AuthService(db)
+        result = await service.change_password(
+            user_id=current_user.id,
+            current_password=body.current_password,
+            new_password=body.new_password,
+        )
+        return SuccessResponse(message="Password changed successfully", data=result)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Change password failed")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")

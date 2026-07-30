@@ -50,14 +50,27 @@ class BrandVoiceService:
     async def update_brand_voice(self, business_id: UUID, data: dict[str, Any]) -> BrandVoice:
         brand_voice = await self.get_brand_voice(business_id)
 
-        allowed_fields = {
-            "tone", "style", "language", "personality", "values",
-            "keywords", "forbidden_terms", "custom_rules",
-            "greeting_template", "closing_template", "sample_replies",
+        field_map = {
+            "writing_style": "style",
+            "greeting_style": "greeting_template",
+            "closing_style": "closing_template",
+            "business_description": None,
+            "company_name": None,
+            "industry": None,
+            "reply_length": None,
+            "emoji_preference": None,
+            "professional_level": None,
+            "personalization_level": None,
+            "custom_instructions": None,
         }
 
         for key, value in data.items():
-            if key in allowed_fields and value is not None:
+            mapped = field_map.get(key)
+            if mapped and value is not None:
+                setattr(brand_voice, mapped, value)
+            elif mapped is None:
+                continue
+            elif key in ("tone", "style", "language", "personality", "values", "keywords", "forbidden_terms", "custom_rules", "greeting_template", "closing_template", "sample_replies") and value is not None:
                 setattr(brand_voice, key, value)
 
         brand_voice.is_default = False

@@ -69,7 +69,7 @@ async def update_reply(
 ):
     try:
         service = ReplyService(db)
-        reply = await service.update_reply(business_id=business.id, reply_id=reply_id, content=content)
+        reply = await service.update_reply(business_id=business.id, reply_id=reply_id, content=body.content)
         if not reply:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found")
         return SuccessResponse(message="Reply updated", data={"reply_id": str(reply.id)})
@@ -110,7 +110,7 @@ async def reject_reply(
 ):
     try:
         service = ReplyService(db)
-        reply = await service.reject_reply(business_id=business.id, reply_id=reply_id, reason=reason)
+        reply = await service.reject_reply(business_id=business.id, reply_id=reply_id, reason=body.reason)
         if not reply:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found")
         return SuccessResponse(message="Reply rejected", data={"reply_id": str(reply.id)})
@@ -119,6 +119,28 @@ async def reject_reply(
     except Exception as exc:
         logger.exception("Failed to reject reply")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reject reply")
+
+
+@router.delete("/{reply_id}")
+async def delete_reply(
+    reply_id: UUID,
+    current_user: User = Depends(get_current_user),
+    business: Business = Depends(get_current_business),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        service = ReplyService(db)
+        reply = await service.get_reply(business_id=business.id, reply_id=reply_id)
+        if not reply:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found")
+        await db.delete(reply)
+        await db.flush()
+        return SuccessResponse(message="Reply deleted")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to delete reply")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete reply")
 
 
 @router.post("/{reply_id}/publish")
@@ -149,7 +171,7 @@ async def regenerate_reply(
     business: Business = Depends(get_current_business),
     db: AsyncSession = Depends(get_db),
 ):
-    custom_instructions = body.get("custom_instructions")
+    custom_instructions = body.get("custom_instructions", "")
     try:
         service = ReplyService(db)
         reply = await service.get_reply(business_id=business.id, reply_id=reply_id)
@@ -157,7 +179,7 @@ async def regenerate_reply(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found")
 
         reply = await service.regenerate_reply(
-            business_id=business.id, review_id=reply.review_id
+            business_id=business.id, review_id=reply.review_id, custom_instructions=custom_instructions
         )
         return SuccessResponse(message="Reply regenerated", data={"reply_id": str(reply.id), "content": reply.content})
     except HTTPException:

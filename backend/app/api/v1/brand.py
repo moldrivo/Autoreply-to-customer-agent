@@ -26,7 +26,25 @@ async def get_brand_voice(
     try:
         service = BrandVoiceService(db)
         brand_voice = await service.get_brand_voice(business_id=business.id)
-        return brand_voice
+        return {
+            "id": str(brand_voice.id),
+            "business_id": str(brand_voice.business_id),
+            "company_name": business.name,
+            "industry": business.industry or "",
+            "business_description": business.description or "",
+            "writing_style": brand_voice.style,
+            "tone": brand_voice.tone,
+            "language": brand_voice.language or "en",
+            "reply_length": "medium",
+            "greeting_style": brand_voice.greeting_template or "Dear [Customer Name]",
+            "closing_style": brand_voice.closing_template or "Best regards",
+            "emoji_preference": False,
+            "professional_level": 3,
+            "personalization_level": 3,
+            "custom_instructions": "",
+            "created_at": brand_voice.created_at.isoformat() if brand_voice.created_at else None,
+            "updated_at": brand_voice.updated_at.isoformat() if brand_voice.updated_at else None,
+        }
     except Exception as exc:
         logger.exception("Failed to fetch brand voice")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch brand voice")

@@ -29,6 +29,14 @@ _PLATFORM_CHAR_LIMITS = {
     "default": {"min": 50, "max": 500},
 }
 
+_PLATFORM_MAX_WORDS = {
+    "google": 80,
+    "yelp": 120,
+    "trustpilot": 100,
+    "facebook": 50,
+    "default": 120,
+}
+
 _INDUSTRY_SPECIFIC_CHECKS = {
     "healthcare": {
         "check": r"\b(consult your physician|seek medical advice|not medical advice|disclaimer|consult a healthcare professional)\b",

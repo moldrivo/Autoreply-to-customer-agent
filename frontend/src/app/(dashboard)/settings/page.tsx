@@ -98,7 +98,8 @@ export default function SettingsPage() {
     onError: () => toast.error('Failed to save profile'),
   })
   const changePasswordMutation = useMutation({
-    mutationFn: (data: { current_password: string; new_password: string }) => api.login('', data.new_password).then(() => {}),
+    mutationFn: (data: { current_password: string; new_password: string }) =>
+      api.changePassword(data.current_password, data.new_password),
     onSuccess: () => toast.success('Password changed'),
     onError: () => toast.error('Failed to change password'),
   })

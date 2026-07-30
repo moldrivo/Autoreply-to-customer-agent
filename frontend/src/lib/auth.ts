@@ -31,7 +31,7 @@ export function getUser(): { id: string; email: string; full_name: string; busin
   const token = getToken()
   if (!token) return null
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(token.split('.')[1].length + (4 - token.split('.')[1].length % 4) % 4, '=')))
     return {
       id: payload.sub || payload.id,
       email: payload.email,
@@ -49,7 +49,7 @@ export function isAuthenticated(): boolean {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) return false
-    const payload = JSON.parse(atob(parts[1]))
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(parts[1].length + (4 - parts[1].length % 4) % 4, '=')))
     if (!payload.exp) return false
     return payload.exp * 1000 > Date.now()
   } catch {

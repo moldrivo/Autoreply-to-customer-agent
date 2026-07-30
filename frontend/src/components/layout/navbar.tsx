@@ -32,6 +32,7 @@ const pageTitles: Record<string, string> = {
   '/reviews': 'Reviews',
   '/replies': 'Replies',
   '/brand': 'Brand Voice',
+  '/agent': 'Agent',
   '/analytics': 'Analytics',
   '/admin': 'Admin',
   '/settings': 'Settings',

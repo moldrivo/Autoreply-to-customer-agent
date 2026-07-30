@@ -17,7 +17,7 @@ from slowapi import _rate_limit_exceeded_handler
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-from app.api.v1 import admin, analytics, auth, brand, platforms, replies, reviews
+from app.api.v1 import admin, analytics, auth, brand, knowledge, platforms, replies, reviews
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.dependencies import limiter
@@ -151,6 +151,7 @@ app.include_router(brand.router)
 app.include_router(analytics.router)
 app.include_router(admin.router)
 app.include_router(platforms.router)
+app.include_router(knowledge.router)
 
 
 @app.get("/health")

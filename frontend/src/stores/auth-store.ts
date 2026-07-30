@@ -22,8 +22,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     const res = await api.login(_email, _password)
     setToken(res.access_token)
     setRefreshToken(res.refresh_token)
+    const user = await api.getMe()
     set({
-      user: { id: res.user_id, email: _email } as User,
+      user,
       isAuthenticated: true,
       isLoading: false,
     })

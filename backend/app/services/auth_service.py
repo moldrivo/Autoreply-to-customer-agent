@@ -211,3 +211,16 @@ class AuthService:
             "token_type": "bearer",
         }
 
+    async def change_password(self, user_id: UUID, current_password: str, new_password: str) -> dict:
+        result = await self.db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ValueError("User not found")
+
+        if not verify_password(current_password, user.hashed_password):
+            raise ValueError("Current password is incorrect")
+
+        user.hashed_password = hash_password(new_password)
+        await self.db.flush()
+        return {"reset": True}
+

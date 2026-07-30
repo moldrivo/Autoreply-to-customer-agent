@@ -52,3 +52,23 @@ class Review(Base):
     )
 
     reply = relationship("Reply", back_populates="review", uselist=False)
+
+    @property
+    def review_text(self) -> str:
+        return self.content
+
+    @property
+    def reply_text(self) -> Optional[str]:
+        return self.reply.content if self.reply else None
+
+    @property
+    def is_auto_replied(self) -> bool:
+        return self.reply is not None and self.reply.status == "published"
+
+    @property
+    def needs_human_review(self) -> bool:
+        return self.risk_level in ("medium", "high")
+
+    @property
+    def replied_at(self) -> Optional[datetime]:
+        return self.reply.published_at if self.reply else None

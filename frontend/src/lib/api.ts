@@ -207,4 +207,8 @@ export async function disconnectPlatform(id: string): Promise<void> {
   await api.post(`/platforms/${id}/disconnect`)
 }
 
+export async function changePassword(current_password: string, new_password: string): Promise<void> {
+  await api.post('/auth/change-password', { current_password, new_password })
+}
+
 export default api

@@ -42,13 +42,25 @@ async def get_reviews(
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        from datetime import datetime
+
+        parsed_date_from: Optional[datetime] = None
+        parsed_date_to: Optional[datetime] = None
+        try:
+            if date_from:
+                parsed_date_from = datetime.fromisoformat(date_from)
+            if date_to:
+                parsed_date_to = datetime.fromisoformat(date_to)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format. Use ISO 8601 (e.g. 2024-01-01T00:00:00)")
+
         filters = ReviewFilterParams(
             sentiment=sentiment,
             platform=platform,
             rating=rating,
             risk_level=risk_level,
-            date_from=date_from,
-            date_to=date_to,
+            date_from=parsed_date_from,
+            date_to=parsed_date_to,
             search=search,
             page=page,
             page_size=page_size,
@@ -115,6 +127,28 @@ async def flag_review(
     except Exception as exc:
         logger.exception("Failed to flag review")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to flag review")
+
+
+@router.delete("/{review_id}")
+async def delete_review(
+    review_id: UUID,
+    current_user: User = Depends(get_current_user),
+    business: Business = Depends(get_current_business),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        service = ReviewService(db)
+        review = await service.get_review(business_id=business.id, review_id=review_id)
+        if not review:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
+        await db.delete(review)
+        await db.flush()
+        return SuccessResponse(message="Review deleted")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to delete review")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete review")
 
 
 @router.post("/{review_id}/generate-reply")

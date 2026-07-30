@@ -48,9 +48,9 @@ function getPasswordStrength(pw: string): { score: number; label: string; color:
   if (/[A-Z]/.test(pw)) score++
   if (/[0-9]/.test(pw)) score++
   if (/[^A-Za-z0-9]/.test(pw)) score++
-  const labels = ['Weak', 'Fair', 'Good', 'Strong']
-  const colors = ['bg-red-500', 'bg-amber-500', 'bg-yellow-500', 'bg-emerald-500']
-  return { score, label: labels[score] || 'Weak', color: colors[score] || 'bg-red-500' }
+  const labels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong']
+  const colors = ['bg-red-500', 'bg-amber-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-green-500']
+  return { score, label: labels[score] ?? 'Weak', color: colors[score] ?? 'bg-red-500' }
 }
 
 export default function SignupPage() {
